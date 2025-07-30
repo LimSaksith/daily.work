@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Work Schedule App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 10px;
+      background: linear-gradient(120deg, #fff0e0, #ffc285);
+      background-attachment: fixed;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.5em;
+      color: #333;
+    }
+    .schedule-container {
+      max-width: 100%;
+      margin: auto;
+      background: #ffffffcc;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .task {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      flex-direction: column;
+    }
+    .task-time {
+      font-weight: bold;
+    }
+    .add-task, .filters {
+      margin-top: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    input, select, button {
+      padding: 10px;
+      font-size: 1em;
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      cursor: pointer;
+      background-color: #0066cc;
+      color: white;
+      border: none;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #005bb5;
+    }
+    @media (min-width: 600px) {
+      .add-task, .filters {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+      input, select, button {
+        flex: 1 1 30%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Daily Work(Srul Bul Tic)🤣😎</h1>
+  <div class="schedule-container">
+    <div class="filters">
+      <input type="date" id="filterDate">
+      <input type="text" id="filterCategory" placeholder="Category">
+      <button onclick="applyFilters()">Filter</button>
+      <button onclick="resetFilters()">Reset</button>
+    </div>
+
+    <div id="taskList">
+      <!-- Tasks will appear here -->
+    </div>
+
+    <div class="add-task">
+      <input type="time" id="taskTime" required>
+      <input type="text" id="taskDesc" placeholder="Task description" required>
+      <input type="date" id="taskDate" required>
+      <input type="text" id="taskCategory" placeholder="Category" required>
+      <input type="color" id="taskColor" title="Choose color for category">
+      <button onclick="addTask()">Add</button>
+    </div>
+  </div>
+
+  <script>
+    const taskList = document.getElementById('taskList');
+
+    function getCategoryColor(category, tasks) {
+      const match = tasks.find(t => t.category.toLowerCase() === category.toLowerCase());
+      return match ? match.color : "#e2e3e5";
+    }
+
+    function loadTasks() {
+      const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+      taskList.innerHTML = '';
+      tasks.sort((a, b) => {
+        const dateA = new Date(a.date + 'T' + a.time);
+        const dateB = new Date(b.date + 'T' + b.time);
+        return dateB - dateA;
+      }).forEach((task, index) => {
+        const taskEl = document.createElement('div');
+        taskEl.className = 'task';
+        taskEl.style.backgroundColor = task.color || getCategoryColor(task.category, tasks);
+        taskEl.innerHTML = `
+          <div>
+            <div class="task-time">${task.date} ${task.time}</div>
+            <div>${task.description} <em>(${task.category})</em></div>
+          </div>
+          <button onclick="deleteTask(${index})">🗑️</button>
+        `;
+        taskList.appendChild(taskEl);
+      });
+    }
+
+    function addTask() {
+      const time = document.getElementById('taskTime').value;
+      const desc = document.getElementById('taskDesc').value;
+      const date = document.getElementById('taskDate').value;
+      const category = document.getElementById('taskCategory').value;
+      const color = document.getElementById('taskColor').value;
+
+      if (!time || !desc || !date || !category) return;
+
+      const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+      tasks.push({ time, description: desc, date, category, color });
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+
+      loadTasks();
+
+      document.getElementById('taskTime').value = '';
+      document.getElementById('taskDesc').value = '';
+      document.getElementById('taskDate').value = '';
+      document.getElementById('taskCategory').value = '';
+      document.getElementById('taskColor').value = '#ffffff';
+    }
+
+    function deleteTask(index) {
+      const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+      tasks.splice(index, 1);
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+      loadTasks();
+    }
+
+    function applyFilters() {
+      const filterDate = document.getElementById('filterDate').value;
+      const filterCategory = document.getElementById('filterCategory').value.toLowerCase();
+      const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+      const filtered = tasks.filter(task => {
+        return (!filterDate || task.date === filterDate) &&
+               (!filterCategory || task.category.toLowerCase().includes(filterCategory));
+      });
+      taskList.innerHTML = '';
+      filtered.forEach((task, index) => {
+        const taskEl = document.createElement('div');
+        taskEl.className = 'task';
+        taskEl.style.backgroundColor = task.color || getCategoryColor(task.category, filtered);
+        taskEl.innerHTML = `
+          <div>
+            <div class="task-time">${task.date} ${task.time}</div>
+            <div>${task.description} <em>(${task.category})</em></div>
+          </div>
+          <button onclick="deleteTask(${index})">🗑️</button>
+        `;
+        taskList.appendChild(taskEl);
+      });
+    }
+
+    function resetFilters() {
+      document.getElementById('filterDate').value = '';
+      document.getElementById('filterCategory').value = '';
+      loadTasks();
+    }
+
+    loadTasks();
+  </script>
+
+</body>
+</html>
